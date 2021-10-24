@@ -1,0 +1,14 @@
+__pycache__
+*.ipynb
+*.ipynb
+venv/
+.venv/
+*/sgd_model/
+*/snips_model/
+*/atis_model/
+*.zip
+__pycache__/
+.idea/
+*.json
+dataset/data/*
+dataset/raw_data/*

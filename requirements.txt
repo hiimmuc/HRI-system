@@ -1,0 +1,9 @@
+torch~=1.9.1
+transformers~=3.0.2
+seqeval~=0.0.12
+pytorch-crf==0.7.2
+pydub~=0.25.1
+setuptools~=57.0.0
+requests~=2.25.1
+numpy~=1.19.5
+tqdm~=4.62.3

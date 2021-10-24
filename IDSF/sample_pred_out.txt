@@ -1,0 +1,4 @@
+<GetWeather> -> I want to go to [Canada:B-city] on [April:B-date]
+<GetWeather> -> What is the weather in [Hanoi?:B-city]
+<GetWeather> -> What is the temperature in [Paris:B-city]
+<PlaySong> -> I want to listen to [hello:B-song_name] [andele:I-song_name]
