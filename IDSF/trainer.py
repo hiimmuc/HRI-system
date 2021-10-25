@@ -236,7 +236,7 @@ class Trainer(object):
 
     def save_model(self):
         # Save model checkpoint (Overwrite)
-        save_folder = Path(self.root_dir, 'backup')
+        save_folder = Path(self.args.root_dir, 'backup')
         model_save_path = str(Path(save_folder, self.args.model_dir))
 
         if not os.path.exists(model_save_path):
@@ -250,7 +250,7 @@ class Trainer(object):
 
     def load_model(self):
         # Check whether model exists
-        save_folder = Path(self.root_dir, 'backup')
+        save_folder = Path(self.args.root_dir, 'backup')
         model_save_path = str(Path(save_folder, self.args.model_dir))
 
         if not os.path.exists(model_save_path):
