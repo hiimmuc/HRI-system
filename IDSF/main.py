@@ -37,11 +37,11 @@ if __name__ == '__main__':
 
     parser.add_argument("--task", default=None, required=True,
                         type=str, help="The name of the task to train")
-    parser.add_argument("--root_dir", default=None, required=True,
+    parser.add_argument("--root_dir", default='IDSF',
                         type=str, help="root directory")
-    parser.add_argument("--model_dir", default=None, required=True,
+    parser.add_argument("--model_dir", default=None,
                         type=str, help="Path to save, load model")
-    parser.add_argument("--data_dir", default="./dataset/data",
+    parser.add_argument("--data_dir", default="IDSF/dataset/data",
                         type=str, help="The input data dir")
     parser.add_argument("--intent_label_file",
                         default="intent_label.txt", type=str, help="Intent Label file")
@@ -105,5 +105,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     args.model_name_or_path = MODEL_PATH_MAP[args.model_type]
+
+    if args.model_dir is None:
+        args.model_dir = os.path.join(args.root_dir, args.task)
+
     os.makedirs(args.model_dir, exist_ok=True)
     main(args)
