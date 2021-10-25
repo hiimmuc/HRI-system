@@ -232,27 +232,24 @@ class Trainer(object):
 
     def save_model(self):
         # Save model checkpoint (Overwrite)
-        save_folder = Path(self.args.root_dir, 'backup')
-        model_save_path = str(Path(save_folder, self.args.model_dir))
-        os.makedirs(model_save_path, exist_ok=True)
 
-        model_to_save = model_save_path if hasattr(self.model, 'module') else self.model
-        model_to_save.save_pretrained(model_save_path)
+        os.makedirs(self.args.model_dir, exist_ok=True)
+
+        model_to_save = self.args.model_dir if hasattr(self.model, 'module') else self.model
+        model_to_save.save_pretrained(self.args.model_dir)
 
         # Save training arguments together with the trained model
-        torch.save(self.args, os.path.join(model_save_path, 'training_args.bin'))
-        logger.info("Saving model checkpoint to %s", model_save_path)
+        torch.save(self.args, os.path.join(self.args.model_dir, 'training_args.bin'))
+        logger.info("Saving model checkpoint to %s",  self.args.model_dir)
 
     def load_model(self):
         # Check whether model exists
-        save_folder = Path(self.args.root_dir, 'backup')
-        model_save_path = str(Path(save_folder, self.args.model_dir))
 
-        if not os.path.exists(model_save_path):
+        if not os.path.exists(self.args.model_dir):
             raise Exception("Model doesn't exists! Train first!")
 
         try:
-            self.model = self.model_class.from_pretrained(model_save_path,
+            self.model = self.model_class.from_pretrained(self.args.model_dir,
                                                           args=self.args,
                                                           intent_label_lst=self.intent_label_lst,
                                                           slot_label_lst=self.slot_label_lst)
