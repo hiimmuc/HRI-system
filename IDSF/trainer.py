@@ -5,7 +5,8 @@ from pathlib import Path
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
-from tqdm import tqdm, trange
+from tqdm import trange
+from tqdm.notebook import tqdm
 from transformers import AdamW, BertConfig, get_linear_schedule_with_warmup
 
 try:
