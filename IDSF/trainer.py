@@ -88,7 +88,7 @@ class Trainer(object):
 
         train_iterator = int(self.args.num_train_epochs)
 
-        for i in train_iterator:
+        for i in range(train_iterator):
             logger.info("Epoch: [%d/%d]\n", i, train_iterator)
             epoch_iterator = tqdm(train_dataloader, desc="Iteration")
             for step, batch in enumerate(epoch_iterator):
@@ -130,10 +130,6 @@ class Trainer(object):
                 if 0 < self.args.max_steps < global_step:
                     epoch_iterator.close()
                     break
-
-            if 0 < self.args.max_steps < global_step:
-                train_iterator.close()
-                break
 
         return global_step, tr_loss / global_step
 

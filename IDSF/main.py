@@ -107,7 +107,7 @@ if __name__ == '__main__':
     args.model_name_or_path = MODEL_PATH_MAP[args.model_type]
 
     if args.model_dir is None:
-        args.model_dir = os.path.join(args.root_dir, args.task)
+        args.model_dir = os.path.join(os.path.join(args.root_dir, 'backup'), args.task)
 
     os.makedirs(args.model_dir, exist_ok=True)
     main(args)
