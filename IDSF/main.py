@@ -1,16 +1,17 @@
 import argparse
 import os
 
-try: 
+try:
     from data_loader import load_and_cache_examples
     from trainer import Trainer
     from utils import (MODEL_CLASSES, MODEL_PATH_MAP, init_logger,
                        load_tokenizer, read_prediction_text, set_seed)
 except ModuleNotFoundError:
-    from .data_loader import load_and_cache_examples
-    from .trainer import Trainer
-    from .utils import (MODEL_CLASSES, MODEL_PATH_MAP, init_logger,
-                        load_tokenizer, read_prediction_text, set_seed)
+    from IDSF.data_loader import load_and_cache_examples
+    from IDSF.trainer import Trainer
+    from IDSF.utils import (MODEL_CLASSES, MODEL_PATH_MAP, init_logger,
+                            load_tokenizer, read_prediction_text, set_seed)
+
 
 def main(args):
     init_logger()

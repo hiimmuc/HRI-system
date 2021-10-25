@@ -11,4 +11,7 @@ __pycache__/
 .idea/
 *.json
 dataset/data/*
+dataset/data/*/*
 dataset/raw_data/*
+dataset/raw_data/*/*
+IDSF/backup/*
