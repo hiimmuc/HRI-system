@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from tqdm import trange
-from tqdm.notebook import tqdm
+from tqdm.auto import tqdm
 from transformers import AdamW, BertConfig, get_linear_schedule_with_warmup
 
 try:
@@ -234,9 +234,8 @@ class Trainer(object):
         # Save model checkpoint (Overwrite)
         save_folder = Path(self.args.root_dir, 'backup')
         model_save_path = str(Path(save_folder, self.args.model_dir))
+        os.makedirs(model_save_path, exist_ok=True)
 
-        if not os.path.exists(model_save_path):
-            os.makedirs(model_save_path)
         model_to_save = model_save_path if hasattr(self.model, 'module') else self.model
         model_to_save.save_pretrained(model_save_path)
 
