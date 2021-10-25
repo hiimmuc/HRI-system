@@ -86,9 +86,10 @@ class Trainer(object):
         tr_loss = 0.0
         self.model.zero_grad()
 
-        train_iterator = trange(int(self.args.num_train_epochs), desc="Epoch")
+        train_iterator = int(self.args.num_train_epochs)
 
-        for _ in train_iterator:
+        for i in train_iterator:
+            logger.info("Epoch: [%d/%d]\n", i, train_iterator)
             epoch_iterator = tqdm(train_dataloader, desc="Iteration")
             for step, batch in enumerate(epoch_iterator):
                 self.model.train()
