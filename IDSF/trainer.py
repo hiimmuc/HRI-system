@@ -86,25 +86,29 @@ class Trainer(object):
 
         self.model.zero_grad()
 
-        train_iterator = trange(int(self.args.num_train_epochs), desc="Epoch", disable=self.args.silent)
+        train_iterator = trange(int(self.args.num_train_epochs), desc='Epoch')
 
         for i in train_iterator:
-            epoch_iterator = tqdm(train_dataloader, desc="Iteration")
+            epoch_iterator = tqdm(train_dataloader, desc="Iter")
 
             inputs, intent_logits, slot_logits = None, None, None
 
             for step, batch in enumerate(epoch_iterator):
                 self.model.train()
+
                 batch = tuple(t.to(self.device) for t in batch)  # GPU or CPU
 
                 inputs = {'input_ids': batch[0],
                           'attention_mask': batch[1],
                           'intent_label_ids': batch[3],
                           'slot_labels_ids': batch[4]}
+
                 if self.args.model_type != 'distilbert':
                     inputs['token_type_ids'] = batch[2]
+
                 outputs = self.model(**inputs)
-                # TODO: use this output to calculate training accuracy
+
+                # NOTE: use this output to calculate training accuracy
                 loss, intent_logits, slot_logits = outputs[:2]
 
                 if self.args.gradient_accumulation_steps > 1:
