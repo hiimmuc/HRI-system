@@ -171,7 +171,7 @@ class Trainer(object):
             train_result = {
                 "loss": tr_loss / global_step
             }
-            train_acc_result = evaluate_results(self.args, self.model,
+            train_acc_result = evaluate_results(self.args,
                                                 (intent_preds, out_intent_label_ids),
                                                 (slot_preds, out_slot_labels_ids),
                                                 use_crf=self.args.use_crf)
@@ -255,7 +255,7 @@ class Trainer(object):
 
         results["loss"] = eval_loss / nb_eval_steps
 
-        total_result = evaluate_results(self.args, self.model,
+        total_result = evaluate_results(self.args,
                                         (intent_preds, out_intent_label_ids),
                                         (slot_preds, out_slot_labels_ids),
                                         use_crf=self.args.use_crf)
