@@ -109,7 +109,7 @@ class Trainer(object):
                 outputs = self.model(**inputs)
 
                 # NOTE: use this output to calculate training accuracy
-                loss, intent_logits, slot_logits = outputs[:2]
+                loss, (intent_logits, slot_logits) = outputs[:2]
 
                 if self.args.gradient_accumulation_steps > 1:
                     loss = loss / self.args.gradient_accumulation_steps
