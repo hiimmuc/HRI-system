@@ -1,6 +1,7 @@
 import logging
 import os
 import random
+from re import S
 
 import numpy as np
 import torch
@@ -112,7 +113,7 @@ def get_sentence_frame_acc(intent_preds, intent_labels, slot_preds, slot_labels)
     }
 
 
-def evaluate_results(args, model, inputs, intent_logits, slot_logits, use_crf=False):
+def evaluate_results(args, intent_outputs, slot_outputs, use_crf=False):
     '''run evaluate the output of model to get the prediction results
 
     Args:
@@ -126,42 +127,16 @@ def evaluate_results(args, model, inputs, intent_logits, slot_logits, use_crf=Fa
     Returns:
         [tuple]: total results including intent, slot, and sementic frame accuracy
     '''
-    intent_preds = None
-    slot_preds = None
-    out_intent_label_ids = None
-    out_slot_labels_ids = None
+
+    intent_preds, out_intent_label_ids = intent_outputs
+    slot_preds, out_slot_labels_ids = slot_outputs
 
     pad_token_label_id = args.ignore_index
     slot_label_lst = get_slot_labels(args)
 
-    # intents prediction
-    if intent_preds is None:
-        intent_preds = intent_logits.detach().cpu().numpy()
-        out_intent_label_ids = inputs['intent_label_ids'].detach().cpu().numpy()
-    else:
-        intent_preds = np.append(intent_preds, intent_logits.detach().cpu().numpy(), axis=0)
-        out_intent_label_ids = np.append(
-            out_intent_label_ids, inputs['intent_label_ids'].detach().cpu().numpy(), axis=0)
     # Intent result
     intent_preds = np.argmax(intent_preds, axis=1)
 
-    # Slot prediction
-    if slot_preds is None:
-        if use_crf:
-            # decode() in `torchcrf` returns list with best index directly
-            slot_preds = np.array(model.crf.decode(slot_logits))
-        else:
-            slot_preds = slot_logits.detach().cpu().numpy()
-
-        out_slot_labels_ids = inputs["slot_labels_ids"].detach().cpu().numpy()
-    else:
-        if use_crf:
-            slot_preds = np.append(slot_preds, np.array(model.crf.decode(slot_logits)), axis=0)
-        else:
-            slot_preds = np.append(slot_preds, slot_logits.detach().cpu().numpy(), axis=0)
-
-        out_slot_labels_ids = np.append(out_slot_labels_ids, inputs["slot_labels_ids"].detach().cpu().numpy(),
-                                        axis=0)
     # Slot result
     if not use_crf:
         slot_preds = np.argmax(slot_preds, axis=2)
