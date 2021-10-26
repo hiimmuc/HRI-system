@@ -1,5 +1,6 @@
 import logging
 import os
+from functools import total_ordering
 from pathlib import Path
 
 import numpy as np
@@ -10,15 +11,15 @@ from tqdm.auto import tqdm
 from transformers import AdamW, BertConfig, get_linear_schedule_with_warmup
 
 try:
-    from utils import (MODEL_CLASSES, compute_metrics, get_intent_labels,
-                       get_slot_labels)
+    from utils import (MODEL_CLASSES, compute_metrics, evaluate_results,
+                       get_intent_labels, get_slot_labels)
 except ModuleNotFoundError:
-    from .utils import (MODEL_CLASSES, compute_metrics, get_intent_labels,
-                        get_slot_labels)
+    from .utils import (MODEL_CLASSES, compute_metrics, evaluate_results,
+                        get_intent_labels, get_slot_labels)
 
 logger = logging.getLogger(__name__)
-tr_loss_log = r'train_loss.txt'
-val_loss_log = r'val_loss.txt'
+
+log_file = 'history.txt'
 
 
 class Trainer(object):
@@ -44,10 +45,6 @@ class Trainer(object):
         # GPU or CPU
         self.device = "cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu"
         self.model.to(self.device)
-        with open(os.path.join(args.model_dir, tr_loss_log), 'w') as f:
-            f.write(f"Training loss of {args.model_dir} \n")
-        with open(os.path.join(args.model_dir, val_loss_log), 'w') as f:
-            f.write(f"Valid log of {args.model_dir} \n")
 
     def train(self):
         train_sampler = RandomSampler(self.train_dataset)
@@ -102,6 +99,7 @@ class Trainer(object):
                 if self.args.model_type != 'distilbert':
                     inputs['token_type_ids'] = batch[2]
                 outputs = self.model(**inputs)
+                # TODO: use this output to calculate training accuracy
                 loss = outputs[0]
 
                 if self.args.gradient_accumulation_steps > 1:
@@ -115,14 +113,13 @@ class Trainer(object):
 
                     optimizer.step()
                     scheduler.step()  # Update learning rate schedule
+
                     self.model.zero_grad()
+
                     global_step += 1
 
                     if self.args.logging_steps > 0 and global_step % self.args.logging_steps == 0:
                         self.evaluate("dev")
-                        with open(os.path.join(self.args.model_dir, tr_loss_log), 'a') as f:
-                            f.write(
-                                f'{global_step}, {tr_loss / global_step}\n')
 
                     if self.args.save_steps > 0 and global_step % self.args.save_steps == 0:
                         self.save_model()
@@ -150,10 +147,13 @@ class Trainer(object):
         logger.info("  Batch size = %d", self.args.eval_batch_size)
         eval_loss = 0.0
         nb_eval_steps = 0
-        intent_preds = None
-        slot_preds = None
-        out_intent_label_ids = None
-        out_slot_labels_ids = None
+        # intent_preds = None
+        # slot_preds = None
+        # out_intent_label_ids = None
+        # out_slot_labels_ids = None
+        results = {
+            "loss": eval_loss
+        }
 
         self.model.eval()
 
@@ -171,70 +171,72 @@ class Trainer(object):
 
                 eval_loss += tmp_eval_loss.mean().item()
             nb_eval_steps += 1
+        # TODO: remove this if the code works
+        #     # Intent prediction
+        #     if intent_preds is None:
+        #         intent_preds = intent_logits.detach().cpu().numpy()
+        #         out_intent_label_ids = inputs['intent_label_ids'].detach().cpu().numpy()
+        #     else:
+        #         intent_preds = np.append(intent_preds, intent_logits.detach().cpu().numpy(), axis=0)
+        #         out_intent_label_ids = np.append(
+        #             out_intent_label_ids, inputs['intent_label_ids'].detach().cpu().numpy(), axis=0)
 
-            # Intent prediction
-            if intent_preds is None:
-                intent_preds = intent_logits.detach().cpu().numpy()
-                out_intent_label_ids = inputs['intent_label_ids'].detach().cpu().numpy()
-            else:
-                intent_preds = np.append(intent_preds, intent_logits.detach().cpu().numpy(), axis=0)
-                out_intent_label_ids = np.append(
-                    out_intent_label_ids, inputs['intent_label_ids'].detach().cpu().numpy(), axis=0)
+        #     # Slot prediction
+        #     if slot_preds is None:
+        #         if self.args.use_crf:
+        #             # decode() in `torchcrf` returns list with best index directly
+        #             slot_preds = np.array(self.model.crf.decode(slot_logits))
+        #         else:
+        #             slot_preds = slot_logits.detach().cpu().numpy()
 
-            # Slot prediction
-            if slot_preds is None:
-                if self.args.use_crf:
-                    # decode() in `torchcrf` returns list with best index directly
-                    slot_preds = np.array(self.model.crf.decode(slot_logits))
-                else:
-                    slot_preds = slot_logits.detach().cpu().numpy()
+        #         out_slot_labels_ids = inputs["slot_labels_ids"].detach().cpu().numpy()
+        #     else:
+        #         if self.args.use_crf:
+        #             slot_preds = np.append(slot_preds, np.array(self.model.crf.decode(slot_logits)), axis=0)
+        #         else:
+        #             slot_preds = np.append(slot_preds, slot_logits.detach().cpu().numpy(), axis=0)
 
-                out_slot_labels_ids = inputs["slot_labels_ids"].detach().cpu().numpy()
-            else:
-                if self.args.use_crf:
-                    slot_preds = np.append(slot_preds, np.array(self.model.crf.decode(slot_logits)), axis=0)
-                else:
-                    slot_preds = np.append(slot_preds, slot_logits.detach().cpu().numpy(), axis=0)
+        #         out_slot_labels_ids = np.append(out_slot_labels_ids, inputs["slot_labels_ids"].detach().cpu().numpy(),
+        #                                         axis=0)
 
-                out_slot_labels_ids = np.append(out_slot_labels_ids, inputs["slot_labels_ids"].detach().cpu().numpy(),
-                                                axis=0)
+        # eval_loss = eval_loss / nb_eval_steps
 
-        eval_loss = eval_loss / nb_eval_steps
-        results = {
-            "loss": eval_loss
-        }
+        # # Intent result
+        # intent_preds = np.argmax(intent_preds, axis=1)
 
-        # Intent result
-        intent_preds = np.argmax(intent_preds, axis=1)
+        # # Slot result
+        # if not self.args.use_crf:
+        #     slot_preds = np.argmax(slot_preds, axis=2)
+        # slot_label_map = {i: label for i, label in enumerate(self.slot_label_lst)}
+        # out_slot_label_list = [[] for _ in range(out_slot_labels_ids.shape[0])]
+        # slot_preds_list = [[] for _ in range(out_slot_labels_ids.shape[0])]
 
-        # Slot result
-        if not self.args.use_crf:
-            slot_preds = np.argmax(slot_preds, axis=2)
-        slot_label_map = {i: label for i, label in enumerate(self.slot_label_lst)}
-        out_slot_label_list = [[] for _ in range(out_slot_labels_ids.shape[0])]
-        slot_preds_list = [[] for _ in range(out_slot_labels_ids.shape[0])]
+        # for i in range(out_slot_labels_ids.shape[0]):
+        #     for j in range(out_slot_labels_ids.shape[1]):
+        #         if out_slot_labels_ids[i, j] != self.pad_token_label_id:
+        #             out_slot_label_list[i].append(slot_label_map[out_slot_labels_ids[i][j]])
+        #             slot_preds_list[i].append(slot_label_map[slot_preds[i][j]])
 
-        for i in range(out_slot_labels_ids.shape[0]):
-            for j in range(out_slot_labels_ids.shape[1]):
-                if out_slot_labels_ids[i, j] != self.pad_token_label_id:
-                    out_slot_label_list[i].append(slot_label_map[out_slot_labels_ids[i][j]])
-                    slot_preds_list[i].append(slot_label_map[slot_preds[i][j]])
+        # total_result = compute_metrics(intent_preds, out_intent_label_ids, slot_preds_list, out_slot_label_list)
 
-        total_result = compute_metrics(intent_preds, out_intent_label_ids, slot_preds_list, out_slot_label_list)
+        total_result = evaluate_results(self.args, self.model, inputs, intent_logits, slot_logits, use_crf=self.args.use_crf)
+
         results.update(total_result)
 
         logger.info("***** Eval results *****")
         for key in sorted(results.keys()):
             logger.info("  %s = %s", key, str(results[key]))
-        with open(os.path.join(self.args.model_dir, val_loss_log), 'a') as f:
-            f.write(f'{results}\n')
+
+        # >> write to log file
+        with open(os.path.join(self.args.model_dir, log_file), 'a') as f:
+            f.write(f'[Eval] {results}\n')
         return results
 
     def save_model(self):
         # Save model checkpoint (Overwrite)
-
         os.makedirs(self.args.model_dir, exist_ok=True)
 
+        # NOTE: if you want to modify saving types, check here
         model_to_save = self.args.model_dir if hasattr(self.model, 'module') else self.model
         model_to_save.save_pretrained(self.args.model_dir)
 

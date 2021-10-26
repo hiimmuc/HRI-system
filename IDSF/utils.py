@@ -110,3 +110,71 @@ def get_sentence_frame_acc(intent_preds, intent_labels, slot_preds, slot_labels)
     return {
         "sementic_frame_acc": sementic_acc
     }
+
+
+def evaluate_results(args, model, inputs, intent_logits, slot_logits, use_crf=False):
+    '''run evaluate the output of model to get the prediction results
+
+    Args:
+        args ([type]): [description]
+        model ([type]): [description]
+        inputs ([type]): [description]
+        intent_logits ([type]): [description]
+        slot_logits ([type]): [description]
+        use_crf (bool, optional): [description]. Defaults to False.
+
+    Returns:
+        [tuple]: total results including intent, slot, and sementic frame accuracy
+    '''
+    intent_preds = None
+    slot_preds = None
+    out_intent_label_ids = None
+    out_slot_labels_ids = None
+
+    pad_token_label_id = args.ignore_index
+    slot_label_lst = get_slot_labels(args)
+
+    # intents prediction
+    if intent_preds is None:
+        intent_preds = intent_logits.detach().cpu().numpy()
+        out_intent_label_ids = inputs['intent_label_ids'].detach().cpu().numpy()
+    else:
+        intent_preds = np.append(intent_preds, intent_logits.detach().cpu().numpy(), axis=0)
+        out_intent_label_ids = np.append(
+            out_intent_label_ids, inputs['intent_label_ids'].detach().cpu().numpy(), axis=0)
+    # Intent result
+    intent_preds = np.argmax(intent_preds, axis=1)
+
+    # Slot prediction
+    if slot_preds is None:
+        if use_crf:
+            # decode() in `torchcrf` returns list with best index directly
+            slot_preds = np.array(model.crf.decode(slot_logits))
+        else:
+            slot_preds = slot_logits.detach().cpu().numpy()
+
+        out_slot_labels_ids = inputs["slot_labels_ids"].detach().cpu().numpy()
+    else:
+        if use_crf:
+            slot_preds = np.append(slot_preds, np.array(model.crf.decode(slot_logits)), axis=0)
+        else:
+            slot_preds = np.append(slot_preds, slot_logits.detach().cpu().numpy(), axis=0)
+
+        out_slot_labels_ids = np.append(out_slot_labels_ids, inputs["slot_labels_ids"].detach().cpu().numpy(),
+                                        axis=0)
+    # Slot result
+    if not use_crf:
+        slot_preds = np.argmax(slot_preds, axis=2)
+    slot_label_map = {i: label for i, label in enumerate(slot_label_lst)}
+    out_slot_label_list = [[] for _ in range(out_slot_labels_ids.shape[0])]
+    slot_preds_list = [[] for _ in range(out_slot_labels_ids.shape[0])]
+
+    for i in range(out_slot_labels_ids.shape[0]):
+        for j in range(out_slot_labels_ids.shape[1]):
+            if out_slot_labels_ids[i, j] != pad_token_label_id:
+                out_slot_label_list[i].append(slot_label_map[out_slot_labels_ids[i][j]])
+                slot_preds_list[i].append(slot_label_map[slot_preds[i][j]])
+
+    total_result = compute_metrics(intent_preds, out_intent_label_ids, slot_preds_list, out_slot_label_list)
+
+    return total_result
