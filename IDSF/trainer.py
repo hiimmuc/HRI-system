@@ -81,6 +81,7 @@ class Trainer(object):
 
         global_step = 0
         tr_loss = 0.0
+
         self.model.zero_grad()
 
         train_iterator = int(self.args.num_train_epochs)
@@ -88,6 +89,9 @@ class Trainer(object):
         for i in range(train_iterator):
             logger.info("Epoch: [%d/%d]\n", i, train_iterator)
             epoch_iterator = tqdm(train_dataloader, desc="Iteration")
+
+            inputs, intent_logits, slot_logits = None, None, None
+
             for step, batch in enumerate(epoch_iterator):
                 self.model.train()
                 batch = tuple(t.to(self.device) for t in batch)  # GPU or CPU
@@ -101,6 +105,7 @@ class Trainer(object):
                 outputs = self.model(**inputs)
                 # TODO: use this output to calculate training accuracy
                 loss = outputs[0]
+                intent_logits, slot_logits = outputs[1], outputs[2]
 
                 if self.args.gradient_accumulation_steps > 1:
                     loss = loss / self.args.gradient_accumulation_steps
@@ -128,6 +133,17 @@ class Trainer(object):
                     epoch_iterator.close()
                     break
 
+            # * update history files
+            train_result = {
+                "loss": tr_loss / global_step
+            }
+            train_acc_result = evaluate_results(self.args, self.model, inputs, intent_logits, slot_logits, use_crf=self.args.use_crf)
+            train_result.update(train_acc_result)
+
+            # >> write to log file
+            with open(os.path.join(self.args.model_dir, log_file), 'a') as f:
+                f.write(f'[Train] {train_result}\n')
+
         return global_step, tr_loss / global_step
 
     def evaluate(self, mode):
@@ -147,10 +163,6 @@ class Trainer(object):
         logger.info("  Batch size = %d", self.args.eval_batch_size)
         eval_loss = 0.0
         nb_eval_steps = 0
-        # intent_preds = None
-        # slot_preds = None
-        # out_intent_label_ids = None
-        # out_slot_labels_ids = None
         results = {
             "loss": eval_loss
         }
@@ -171,53 +183,8 @@ class Trainer(object):
 
                 eval_loss += tmp_eval_loss.mean().item()
             nb_eval_steps += 1
-        # TODO: remove this if the code works
-        #     # Intent prediction
-        #     if intent_preds is None:
-        #         intent_preds = intent_logits.detach().cpu().numpy()
-        #         out_intent_label_ids = inputs['intent_label_ids'].detach().cpu().numpy()
-        #     else:
-        #         intent_preds = np.append(intent_preds, intent_logits.detach().cpu().numpy(), axis=0)
-        #         out_intent_label_ids = np.append(
-        #             out_intent_label_ids, inputs['intent_label_ids'].detach().cpu().numpy(), axis=0)
 
-        #     # Slot prediction
-        #     if slot_preds is None:
-        #         if self.args.use_crf:
-        #             # decode() in `torchcrf` returns list with best index directly
-        #             slot_preds = np.array(self.model.crf.decode(slot_logits))
-        #         else:
-        #             slot_preds = slot_logits.detach().cpu().numpy()
-
-        #         out_slot_labels_ids = inputs["slot_labels_ids"].detach().cpu().numpy()
-        #     else:
-        #         if self.args.use_crf:
-        #             slot_preds = np.append(slot_preds, np.array(self.model.crf.decode(slot_logits)), axis=0)
-        #         else:
-        #             slot_preds = np.append(slot_preds, slot_logits.detach().cpu().numpy(), axis=0)
-
-        #         out_slot_labels_ids = np.append(out_slot_labels_ids, inputs["slot_labels_ids"].detach().cpu().numpy(),
-        #                                         axis=0)
-
-        # eval_loss = eval_loss / nb_eval_steps
-
-        # # Intent result
-        # intent_preds = np.argmax(intent_preds, axis=1)
-
-        # # Slot result
-        # if not self.args.use_crf:
-        #     slot_preds = np.argmax(slot_preds, axis=2)
-        # slot_label_map = {i: label for i, label in enumerate(self.slot_label_lst)}
-        # out_slot_label_list = [[] for _ in range(out_slot_labels_ids.shape[0])]
-        # slot_preds_list = [[] for _ in range(out_slot_labels_ids.shape[0])]
-
-        # for i in range(out_slot_labels_ids.shape[0]):
-        #     for j in range(out_slot_labels_ids.shape[1]):
-        #         if out_slot_labels_ids[i, j] != self.pad_token_label_id:
-        #             out_slot_label_list[i].append(slot_label_map[out_slot_labels_ids[i][j]])
-        #             slot_preds_list[i].append(slot_label_map[slot_preds[i][j]])
-
-        # total_result = compute_metrics(intent_preds, out_intent_label_ids, slot_preds_list, out_slot_label_list)
+        results["loss"] = eval_loss / nb_eval_steps
 
         total_result = evaluate_results(self.args, self.model, inputs, intent_logits, slot_logits, use_crf=self.args.use_crf)
 
