@@ -81,22 +81,20 @@ class Trainer(object):
         logger.info("  Save steps = %d", self.args.save_steps)
         print('\n')
 
-        global_step = 0
         tr_loss = 0.0
+        global_step = 0
 
         self.model.zero_grad()
 
         train_iterator = trange(int(self.args.num_train_epochs), desc='Progress')
 
         for i in train_iterator:
-            epoch_iterator = tqdm(train_dataloader, desc=f"Epoch {i + 1}")
-
             intent_preds = None
             slot_preds = None
             out_intent_label_ids = None
             out_slot_labels_ids = None
 
-            for step, batch in enumerate(epoch_iterator):
+            for step, batch in enumerate(tqdm(train_dataloader, desc=f"Epoch {i + 1}")):
                 self.model.train()
 
                 batch = tuple(t.to(self.device) for t in batch)  # GPU or CPU
@@ -120,6 +118,9 @@ class Trainer(object):
                 loss.backward()
 
                 tr_loss += loss.item()
+
+                global_step += 1
+
                 if (step + 1) % self.args.gradient_accumulation_steps == 0:
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.args.max_grad_norm)
 
@@ -128,17 +129,11 @@ class Trainer(object):
 
                     self.model.zero_grad()
 
-                    global_step += 1
-
-                    if self.args.logging_steps > 0 and global_step % self.args.logging_steps == 0:
+                    if self.args.logging_steps > 0 and step % self.args.logging_steps == 0:
                         self.evaluate("dev")
 
-                    if self.args.save_steps > 0 and global_step % self.args.save_steps == 0:
+                    if self.args.save_steps > 0 and step % self.args.save_steps == 0:
                         self.save_model()
-
-                if 0 < self.args.max_steps < global_step:
-                    epoch_iterator.close()
-                    break
 
                 # * this part for getting intent and slot predictions
                 # Intent prediction
