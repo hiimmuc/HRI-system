@@ -92,7 +92,7 @@ class Trainer(object):
             out_intent_label_ids = None
             out_slot_labels_ids = None
 
-            for step, batch in enumerate(tqdm(range(int(self.args.num_train_epochs)), desc=f"Epoch {i + 1}")):
+            for step, batch in enumerate(tqdm(train_dataloader, desc=f"Epoch {i + 1}")):
                 self.model.train()
 
                 batch = tuple(t.to(self.device) for t in batch)  # GPU or CPU
