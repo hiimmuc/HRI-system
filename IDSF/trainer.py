@@ -46,6 +46,8 @@ class Trainer(object):
         self.device = "cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu"
         self.model.to(self.device)
 
+        # start
+
     def train(self):
         train_sampler = RandomSampler(self.train_dataset)
         train_dataloader = DataLoader(self.train_dataset, sampler=train_sampler, batch_size=self.args.train_batch_size)
@@ -84,10 +86,9 @@ class Trainer(object):
 
         self.model.zero_grad()
 
-        train_iterator = int(self.args.num_train_epochs)
+        train_iterator = trange(int(self.args.num_train_epochs), desc="Epoch", disable=self.args.silent)
 
-        for i in range(train_iterator):
-            logger.info("Epoch: [%d/%d]\n", i, train_iterator)
+        for i in train_iterator:
             epoch_iterator = tqdm(train_dataloader, desc="Iteration")
 
             inputs, intent_logits, slot_logits = None, None, None
@@ -104,8 +105,7 @@ class Trainer(object):
                     inputs['token_type_ids'] = batch[2]
                 outputs = self.model(**inputs)
                 # TODO: use this output to calculate training accuracy
-                loss = outputs[0]
-                intent_logits, slot_logits = outputs[1], outputs[2]
+                loss, intent_logits, slot_logits = outputs[:2]
 
                 if self.args.gradient_accumulation_steps > 1:
                     loss = loss / self.args.gradient_accumulation_steps
@@ -142,7 +142,7 @@ class Trainer(object):
 
             # >> write to log file
             with open(os.path.join(self.args.model_dir, log_file), 'a') as f:
-                f.write(f'[Train] {train_result}\n')
+                f.write(f"[Train] - Epoch {i} {train_result}\n")
 
         return global_step, tr_loss / global_step
 
