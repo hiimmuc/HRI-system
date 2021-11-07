@@ -1,5 +1,6 @@
 import logging
 import os
+import time
 from functools import total_ordering
 from pathlib import Path
 
@@ -18,7 +19,8 @@ except ModuleNotFoundError:
 
 logger = logging.getLogger(__name__)
 
-log_file = 'history.txt'
+time_now = time.strftime("%Y-%m-%d %H:%M:%S")
+log_file = f'history_{time_now}.txt'
 
 
 class Trainer(object):
