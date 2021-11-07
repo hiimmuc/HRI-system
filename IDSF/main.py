@@ -94,7 +94,7 @@ if __name__ == '__main__':
                         help='Specifies a target value that is ignored and does not contribute to the input gradient')
 
     parser.add_argument('--slot_loss_coef', type=float,
-                        default=1.0, help='Coefficient for the slot loss.')
+                        default=0.6, help='Coefficient for the slot loss.')
 
     # CRF option
     parser.add_argument("--use_crf", action="store_true",

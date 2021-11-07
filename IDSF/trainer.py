@@ -217,7 +217,7 @@ class Trainer(object):
                 outputs = self.model(**inputs)
                 tmp_eval_loss, (intent_logits, slot_logits) = outputs[:2]
 
-                eval_loss += tmp_eval_loss.mean().item()
+                eval_loss += tmp_eval_loss.item()
             nb_eval_steps += 1
 
             # Intent prediction
