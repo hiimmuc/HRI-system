@@ -16,7 +16,7 @@ def main():
     """
     t1 = time.time()
     # Load model
-    model_dir = "IDSF/backup/sgd_model"
+    model_dir = "IDSF/backup/sgd"
     batch_size = 32
     predict_tools = JointBertTools(model_dir=model_dir, batch_size=batch_size)
     print(f"[INFO] load model:{time.time() - t1}")
@@ -64,6 +64,6 @@ def dummy():
 
 
 if __name__ == '__main__':
-    # main()
-    dummy()
+    main()
+    # dummy()
     pass
