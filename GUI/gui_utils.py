@@ -92,14 +92,15 @@ class APP(Ui_MainWindow, QWidget):
             vbox = QVBoxLayout()
             # *2* add the message to the end
             self.temp_dialog_state_tracking.append(f"[{speaker}]: {message}")
+
             for msg in self.temp_dialog_state_tracking:
                 object = QLabel(msg)
-                vbox.addWidget(object)
+                vbox.addWidget(object) # create widget inside the scroll box
             widget.setLayout(vbox)
 
             # *3* scroll to the bottom
             self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-            self.scrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            self.scrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
             self.scrollArea.setWidgetResizable(True)
             self.scrollArea.setWidget(widget)
             # self.MainWindow.setCentralWidget(self.scrollArea)
@@ -125,17 +126,18 @@ class APP(Ui_MainWindow, QWidget):
 
                 # *2.1* update the dialog state tracking
                 self.dialog_state_tracking[-1]['turns'].append(
-                    {"speaker": "User",
-                     "utterance": message,
-                     "domain": "",
-                     "intent": extract_intent,
-                     "slots": extract_slots})
+                                                        {"speaker": "User",
+                                                         "utterance": message,
+                                                         "domain": "",
+                                                         "intent": extract_intent,
+                                                         "slots": extract_slots})
 
                 print(self.dialog_state_tracking)
 
                 log_writer(r'log.txt', self.dialog_state_tracking)
+                # *3.0* perform tasks
 
-                # *3* display the response
+                # *3.1* display the response
                 self.display_message(speaker='User', message=message)
                 self.display_message(speaker='User', message=utterance)
 
@@ -156,7 +158,7 @@ def log_writer(log_file, log_data):
             spk = current_dialog['turns'][-1]['speaker']
             utterance = current_dialog['turns'][-1]['utterance']
             log_msg = f"{dialog_id} [{begin_time} - {end_time}] {spk}: {utterance}"
-            f.write(log_msg)
+            f.write(log_msg + '\n')
     except Exception as e:
         print(e)
 
@@ -174,4 +176,9 @@ if __name__ == "__main__":
     """
     pipeline
     ...
+    get the time
+    them thanh keo ngang
+    cach viet GUI
+    pyuic5 <filename>.ui > <filename>.py
+    trinh bay he thong GUI: cac buoc lam tu qt -> python -> ... -> demo_gui.py
     """

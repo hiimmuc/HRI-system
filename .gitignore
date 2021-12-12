@@ -1,4 +1,4 @@
-__pycache__
+__pycache__/
 *.ipynb
 *.ipynb
 venv/
@@ -7,7 +7,7 @@ venv/
 */snips_model/
 */atis_model/
 *.zip
-__pycache__/
+*/__pycache__/
 .idea/
 *.json
 dataset/data/*

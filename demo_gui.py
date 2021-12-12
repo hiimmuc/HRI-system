@@ -19,6 +19,7 @@ class Pipeline:
         self.model_dir = "IDSF/backup/sgd"
         self.batch_size = 32
         self.model = JointBertTools(model_dir=self.model_dir, batch_size=self.batch_size)
+
         self.app = QtWidgets.QApplication(sys.argv)
         self.MainWindow = QtWidgets.QMainWindow()
         self.ui = APP(self.MainWindow, model=self.model)
