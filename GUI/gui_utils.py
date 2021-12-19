@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 from numpy.lib.function_base import extract
-from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtCore import Qt, QThread, pyqtSlot
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (QLabel, QMessageBox, QTableWidgetItem,
                              QVBoxLayout, QWidget)
@@ -16,9 +16,12 @@ try:
     from Tasks.utils import *
 
     from GUI.chatbot_gui import *
+    from GUI.gui_thread import *
+
 except Exception as e:
     sys.stdout.write(str(e))
     from chatbot_gui import *
+    from gui_thread import *
 
 
 class APP(Ui_MainWindow, QWidget):
@@ -28,8 +31,13 @@ class APP(Ui_MainWindow, QWidget):
         self.setupUi(MainWindow=MainWindow)
         self.idsf_model = model
 
+        self.voice_worker = VoiceThread()
+        self.voice_worker.textChanged.connect(self.voice_pipeline)
+
         self.StopButton.clicked.connect(self.stop_program)
+        self.listenButton.clicked.connect(self.start_voice_pipeline)
         self.InputMessage.returnPressed.connect(self.pipeline)
+
         self.dialog_state_tracking = [{"dialog_id": 0,
                                        "begin_time": 0,
                                        "end_time": 0,
@@ -45,6 +53,9 @@ class APP(Ui_MainWindow, QWidget):
         self.current_text = ''
 
     # =================================control flow=================================
+    def start_voice_pipeline(self):
+        print("Get input from voice")
+        self.voice_worker.start()
 
     def stop_program(self):
         print('-> From: stop_program')
@@ -95,7 +106,7 @@ class APP(Ui_MainWindow, QWidget):
 
             for msg in self.temp_dialog_state_tracking:
                 object = QLabel(msg)
-                vbox.addWidget(object) # create widget inside the scroll box
+                vbox.addWidget(object)  # create widget inside the scroll box
             widget.setLayout(vbox)
 
             # *3* scroll to the bottom
@@ -114,6 +125,8 @@ class APP(Ui_MainWindow, QWidget):
     # =================================pipeline=================================
     def pipeline(self):
         message = self.get_input_message()
+        # get from microphone
+
         try:
             # *1* get the message from the input box
             if len(message) > 0:
@@ -126,11 +139,11 @@ class APP(Ui_MainWindow, QWidget):
 
                 # *2.1* update the dialog state tracking
                 self.dialog_state_tracking[-1]['turns'].append(
-                                                        {"speaker": "User",
-                                                         "utterance": message,
-                                                         "domain": "",
-                                                         "intent": extract_intent,
-                                                         "slots": extract_slots})
+                    {"speaker": "User",
+                     "utterance": message,
+                     "domain": "",
+                     "intent": extract_intent,
+                     "slots": extract_slots})
 
                 print(self.dialog_state_tracking)
 
@@ -139,7 +152,45 @@ class APP(Ui_MainWindow, QWidget):
 
                 # *3.1* display the response
                 self.display_message(speaker='User', message=message)
-                self.display_message(speaker='User', message=utterance)
+                # self.display_message(speaker='User', message=utterance)
+
+                self.InputMessage.clear()
+
+        except Exception as e:
+            self.popup_msg(msg=str(e), src_msg='pipeline')
+        pass
+
+    @QtCore.pyqtSlot(str)
+    def voice_pipeline(self, text=None):
+        # get from microphone
+        message = text if text is not None else ''
+
+        try:
+            # *1* get the message from the input box
+            if len(message) > 0:
+                # *2* get the response from the model
+                # print(self.idsf_model.predict([message]))
+
+                extract_intent, utterance = self.idsf_model.predict([message])[-1].split('->')
+                extract_slots = get_expression(utterance)
+                # print(extract_intent, utterance, extract_slots)
+
+                # *2.1* update the dialog state tracking
+                self.dialog_state_tracking[-1]['turns'].append(
+                    {"speaker": "User",
+                     "utterance": message,
+                     "domain": "",
+                     "intent": extract_intent,
+                     "slots": extract_slots})
+
+                print(self.dialog_state_tracking)
+
+                log_writer(r'log.txt', self.dialog_state_tracking)
+                # *3.0* perform tasks
+
+                # *3.1* display the response
+                self.display_message(speaker='User', message=message)
+                # self.display_message(speaker='User', message=utterance)
 
                 self.InputMessage.clear()
 
@@ -173,12 +224,3 @@ def run():
 
 if __name__ == "__main__":
     run()
-    """
-    pipeline
-    ...
-    get the time
-    them thanh keo ngang
-    cach viet GUI
-    pyuic5 <filename>.ui > <filename>.py
-    trinh bay he thong GUI: cac buoc lam tu qt -> python -> ... -> demo_gui.py
-    """

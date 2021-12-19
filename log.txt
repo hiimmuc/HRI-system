@@ -1,3 +1,9 @@
 0 [0 - 0] User: I want to play Faded from Alan Walker
 0 [0 - 0] User: On April first I need a flight going from Phoenix to San Diego
-0 [0 - 0] User: I would like a flight from Orlando to Salt Lake City for April First on Delta airlines
+0 [0 - 0] User: I would like a flight from Orlando to Salt Lake City for April First on Delta airlines0 [0 - 0] User: hello
+0 [0 - 0] User: can i get the weather in hanoi now?
+0 [0 - 0] User: <bound PYQT_SIGNAL textChanged of VoiceThread object at 0x000001BBBE4C25E0>
+0 [0 - 0] User: <bound PYQT_SIGNAL textChanged of VoiceThread object at 0x000001BBBE4C25E0>
+0 [0 - 0] User: <bound PYQT_SIGNAL textChanged of VoiceThread object at 0x000001BBBE4C25E0>
+0 [0 - 0] User: what is the weather today
+0 [0 - 0] User: Hi how are you

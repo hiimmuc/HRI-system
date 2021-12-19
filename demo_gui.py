@@ -4,7 +4,7 @@ import time
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from ASR.STT import read_from_microphone
+from ASR.STT import *
 from DialogManagement import *
 from GUI.gui_utils import *
 from IDSF.inference_module import JointBertTools
