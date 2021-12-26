@@ -19,3 +19,4 @@ qt5-tools==5.15.2.1.2
 SpeechRecognition==3.8.1
 websocket-client==1.2.1
 youtube-search==2.1.0
+pytorch-crf==0.7.2
