@@ -4,12 +4,13 @@ speech recognition and intents, text segmentation to extract information from sp
 """
 import time
 
-from ASR.STT import read_from_microphone
+from ASR.STT import *
 from DialogManagement import *
 from IDSF.inference_module import JointBertTools
 from Tasks import music, weather
 from Tasks.utils import *
 
+recog = Recognizer()
 
 def main():
     """
@@ -20,9 +21,10 @@ def main():
     batch_size = 32
     predict_tools = JointBertTools(model_dir=model_dir, batch_size=batch_size)
     print(f"[INFO] load model:{time.time() - t1}")
+    
     # iteration till user type n or no to stop
     while input("continue?").lower() not in ['no', 'n']:
-        text = [convert_languages(read_from_microphone())]
+        text = [convert_languages(recog.read_from_microphone())]
         print(text)
         predict_text = predict_tools.predict(text)[0]
         print(predict_text)
@@ -50,7 +52,7 @@ def dummy():
     """
     """
     while input("continue?").lower() not in ['no', 'n']:
-        text = [convert_languages(read_from_microphone())]
+        text = [convert_languages(recog.read_from_microphone())]
         print(text)
         intent = 'GetWeather'
         if intent.strip() == 'GetWeather':
