@@ -7,3 +7,5 @@
 0 [0 - 0] User: <bound PYQT_SIGNAL textChanged of VoiceThread object at 0x000001BBBE4C25E0>
 0 [0 - 0] User: what is the weather today
 0 [0 - 0] User: Hi how are you
+0 [0 - 0] User: hello hello hello
+0 [0 - 0] User: get the weather in Paris
