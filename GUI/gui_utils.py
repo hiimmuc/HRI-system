@@ -190,7 +190,9 @@ class APP(Ui_MainWindow, QWidget):
 
                 # *3.1* display the response
                 self.display_message(speaker='User', message=message)
-                # self.display_message(speaker='User', message=utterance)
+                self.display_message(speaker='User', message=utterance)
+                if extract_intent == '':
+                    self.display_message(speaker='User', message='Sorry, I cannot understand your message')
 
                 self.InputMessage.clear()
 
