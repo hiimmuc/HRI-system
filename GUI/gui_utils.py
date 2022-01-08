@@ -183,17 +183,14 @@ class APP(Ui_MainWindow, QWidget):
                      "intent": extract_intent,
                      "slots": extract_slots})
 
-                print(self.dialog_state_tracking)
+                # print(self.dialog_state_tracking)
 
                 log_writer(r'log.txt', self.dialog_state_tracking)
                 # *3.0* perform tasks
 
                 # *3.1* display the response
                 self.display_message(speaker='User', message=message)
-                self.display_message(speaker='User', message=utterance)
-                if extract_intent == '':
-                    self.display_message(speaker='User', message='Sorry, I cannot understand your message')
-
+                # self.display_message(speaker='User', message=utterance)
                 self.InputMessage.clear()
 
         except Exception as e:

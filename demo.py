@@ -12,6 +12,7 @@ from Tasks.utils import *
 
 recog = Recognizer()
 
+
 def main():
     """
     """
@@ -21,7 +22,7 @@ def main():
     batch_size = 32
     predict_tools = JointBertTools(model_dir=model_dir, batch_size=batch_size)
     print(f"[INFO] load model:{time.time() - t1}")
-    
+
     # iteration till user type n or no to stop
     while input("continue?").lower() not in ['no', 'n']:
         text = [convert_languages(recog.read_from_microphone())]
@@ -41,28 +42,12 @@ def main():
         elif intent.strip() == 'PlaySong':
             # if intent is streaming music
             slots_and_values = get_expression(utterance)
-            yt_search = ''
+            song_name = ''
             for key in slots_and_values:
                 if any(x in key for x in ['track', 'album', 'song_name']):
-                    yt_search += ('' + slots_and_values[key])
-            music.youtube(yt_search)
-
-
-def dummy():
-    """
-    """
-    while input("continue?").lower() not in ['no', 'n']:
-        text = [convert_languages(recog.read_from_microphone())]
-        print(text)
-        intent = 'GetWeather'
-        if intent.strip() == 'GetWeather':
-            # if intent is getting weather information
-            weather.weather_outdoor(city_name='paris')
-        elif intent.strip() == 'PlaySong':
-            # if intent is streaming music
-            yt_search = 'Faded Alan Walker'
-            music.youtube(yt_search)
-    pass
+                    song_name += ('' + slots_and_values[key])
+            # music.youtube(song_name)
+            music.play_from_lib(song_name=song_name)
 
 
 if __name__ == '__main__':
