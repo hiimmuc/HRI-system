@@ -1,13 +1,13 @@
-import webbrowser
-
-from youtube_search import YoutubeSearch
+import glob
 import os
 import random
-import glob
-import pyaudio
-import wave
 import sys
+import wave
+import webbrowser
 from pathlib import Path
+
+import pyaudio
+from youtube_search import YoutubeSearch
 
 LIB_PATH = str(Path("Tasks/backup/music_lib"))
 allowed_ext = ['.mp3', '.wav', '.flac', '.ogg']
@@ -55,22 +55,27 @@ class AudioFile:
         self.p.terminate()
 
 
+import os
+import subprocess
+
+
+def stream_audio_file(file):
+    os.system('ffplay -nodisp -autoexit ' + file)
+
+
 def play_from_lib(song_name):
     '''play song from library'''
     if any(song_name in lib_song.lower() for lib_song in lib):
         print(f'Playing {song_name}')
         song_path = list(filter(lambda lib_song: song_name in lib_song.lower(), lib))[0]
-        song = AudioFile(f'{song_path}')
-        song.play()
-        song.close()
+        format = song_path.split('.')[-1]
+        stream_audio_file(song_path)
         return True
     else:
         print(f'{song_name} not in library, play random song')
         if len(lib) > 0:
             song_path = random.choice(lib)
-            song = AudioFile(f'{song_path}')
-            song.play()
-            song.close()
+            stream_audio_file(song_path)
             return True
         else:
             print('No songs in library')
