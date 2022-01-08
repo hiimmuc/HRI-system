@@ -39,7 +39,7 @@ def main():
                 weather.weather_outdoor(city_name=city_name)
             elif any('timeRange' in key for key in slots_and_values):
                 weather.weather_outdoor()
-        elif intent.strip() == 'PlaySong':
+        elif intent.strip() in ['PlaySong', 'PlayMusic', 'PlayMedia']:
             # if intent is streaming music
             slots_and_values = get_expression(utterance)
             song_name = ''
