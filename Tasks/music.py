@@ -65,6 +65,7 @@ def play_from_lib(song_name):
     if any(song_name in lib_song.lower() for lib_song in lib):
         print(f'Playing {song_name}')
         song_path = list(filter(lambda lib_song: song_name in lib_song.lower(), lib))[0]
+        format = song_path.split('.')[-1]
         stream_audio_file(song_path)
         return True
     else:
